@@ -1,0 +1,185 @@
+---
+title: "MAF db creation"
+output:
+  html_document: 
+    df_print: paged
+  pdf_document: defaul
+---
+
+```{r,setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=F, warning=F)
+# --- libs
+library(tidyverse)
+library(dbplyr)
+library(DBI)
+library(tictoc)
+library(skimr)
+# other libs
+source('MAF-Reader/MAF-Rreader.R')
+source('Chunked-Read.R')
+# for(f in list.files(path = "Library", pattern="*.R")) source(paste("Library/",f,sep=""))
+Rcpp::sourceCpp('MAF-Reader/Reader.cpp')
+```
+
+This files shows how to use the current implementation of the MAFdb. The goal
+of this implementation is to allow fast queries on MAF data without 
+loosing compatibility with MAF analyzing software as the output of each query
+can be easily converted to a regular MAF file.
+
+## Connect to database:
+
+```{r}
+# --- connection
+user <- "postgres"
+con <- dbConnect(RPostgreSQL::PostgreSQL(), 
+  host = "127.0.0.1",
+  user = user,
+  dbname = "MAF-NEW",
+  password = "1234" #rstudioapi::askForPassword(paste("Enter", user, "password:"))
+)
+```
+
+## Setup database structure:
+
+```{r, eval=FALSE}
+# --- db column definition (undefined columns are of varchar type) 
+# Mutect2 VCF based
+df_names <- c(
+  "Entrez_Gene_Id",
+  "Start_Position",
+  "End_Position",
+  "t_depth", "t_ref_count", "t_alt_count", "n_depth", "n_ref_count", "n_alt_count",
+  "ALLELE_NUM",
+  "DISTANCE",
+  "TRANSCRIPT_STRAND",
+  "GMAF", "AFR_MAF", "AMR_MAF", "ASN_MAF", "EAS_MAF", "EUR_MAF", "SAS_MAF", "AA_MAF", "EA_MAF",
+  "PICK",
+  "TSL",
+  "HGVS_OFFSET",
+  "MINIMISED",
+  "ExAC_AF","ExAC_AF_Adj","ExAC_AF_AFR","ExAC_AF_AMR","ExAC_AF_EAS","ExAC_AF_FIN","ExAC_AF_NFE","ExAC_AF_OTH","ExAC_AF_SAS"
+)
+
+df_types <- c(
+  "int",
+  "int",
+  "int",
+  "int","int","int","int", "int","int",
+  "int",
+  "int",
+  "int",
+  "float", "float", "float", "float", "float", "float", "float", "float", "float",
+  "int",
+  "int",
+  "int",
+  "int",
+  "float","float","float","float","float","float","float","float","float"
+)
+
+# --- Load MAF file (GDC TCGA-BRCA Mutect2)
+input.file <- "~/Documenti/TCGA-BRCA-VCF-Datasets/gdc_download_20210128_084228.661394/053f01ed-3154-4aea-9e7f-932c435034b3/TCGA.BRCA.mutect.053f01ed-3154-4aea-9e7f-932c435034b3.DR-10.0.protected.maf"
+limit <- NULL 
+tic()
+maf_full_db_load(con, input.file, limit=limit,
+                 "test", df_names, df_types, reset=T)
+toc()
+# --- Finalize
+dbDisconnect(con)
+
+#[1] "read  8849559  lines"
+#4022.643 sec elapsed
+#[1] TRUE
+```
+
+## Add indexes
+
+```{r, eval=FALSE}
+user <- "postgres"
+con <- dbConnect(RPostgreSQL::PostgreSQL(), 
+  host = "127.0.0.1",
+  user = user,
+  dbname = "MAF-NEW",
+  password = "1234" #rstudioapi::askForPassword(paste("Enter", user, "password:"))
+)
+tic()
+dbSendQuery(con,"CREATE INDEX full_flags_index ON flags (db_index, pass, alt_allele_in_normal, bpcr, bseq,
+            clustered_events, germline_risk, homologous_mapping_event, multi_event_alt_allele_in_normal,
+            oxog, panel_of_normals, str_contraction, t_lod_fstar, triallelic_site);")
+dbSendQuery(con,"CREATE INDEX standard_index ON test (hugo_symbol);")
+dbSendQuery(con,"CREATE INDEX Tumor_Sample_Barcode_index ON test (Tumor_Sample_Barcode);")
+dbSendQuery(con,"CREATE INDEX Matched_Norm_Sample_Barcode_index ON test (Matched_Norm_Sample_Barcode);")
+dbSendQuery(con,"CREATE INDEX pass_index ON flags (pass);")
+dbSendQuery(con,"CREATE INDEX germline_risk_index ON flags (germline_risk);")
+toc()
+dbDisconnect(con)
+```
+
+## In case of persisting connections:
+
+```{r, eval=FALSE}
+# close all connection to PostreSQL
+lapply(dbListConnections(RPostgreSQL::PostgreSQL()), dbDisconnect)
+```
+
+## Show MAFdb structure
+
+```{r}
+user <- "postgres"
+con <- dbConnect(RPostgreSQL::PostgreSQL(), 
+  host = "127.0.0.1",
+  user = user,
+  dbname = "MAF-NEW",
+  password = "1234" #rstudioapi::askForPassword(paste("Enter", user, "password:"))
+)
+tbl(con, "test") %>% colnames()
+tbl(con, "flags") %>% colnames()
+```
+
+## Test operations
+
+```{r}
+example.text <- c(
+  paste("1","N;M","C","D","A;1","A=2","nome:cognome","Marco,Caco", sep="\t"),
+  paste("1","N;M","C","D","A;1","A=2","nome:cognome","Marco,Caco", sep="\t"),
+  paste("1","N;M","C","D","A;1","A=2","nome:cognome","Marco,Caco", sep="\t"),
+  paste("1","N;M;S;T","C","D","A;1","A=2","nome:cognome","Marco,Caco", sep="\t")
+)
+test_MAFdb("example", example.text, c("c1","list","c3","c4", "list_cols", "kv_test", "keys", "values"), c(2,3,1,1,3,3,3,3), 0)
+```
+
+## Test operations on MAF
+
+```{r}
+limit <- 37
+Rcpp::sourceCpp('MAF-Reader/Reader.cpp')
+example.text <- readLines("~/Documenti/TCGA-BRCA-VCF-Datasets/gdc_download_20210128_084228.661394/053f01ed-3154-4aea-9e7f-932c435034b3/TCGA.BRCA.mutect.053f01ed-3154-4aea-9e7f-932c435034b3.DR-10.0.protected.maf", n = limit)
+
+example.header <- example.text[4]
+example.text <- example.text[5:limit]
+
+example.header <- str_split(example.header, "\t")[[1]]
+
+example.text[length(example.text)]
+
+gdc.rules <- read_csv("exdata/GDC-MAF-Structure.csv")
+rules <- gdc.rules %>% pull(Type) %>% map_int(~ ifelse(. == "varchar", 1L, ifelse(. == "float" || . == "integer", 2L, 3L)))
+
+maf_db_reader("mafdb_test", example.text, tolower(example.header), rules, 0) %>% cat()
+```
+
+
+## TEST reader
+
+```{r}
+user <- "postgres"
+con <- dbConnect(RPostgreSQL::PostgreSQL(), 
+  host = "127.0.0.1",
+  user = user,
+  dbname = "MAFdb_test",
+  password = "1234" #rstudioapi::askForPassword(paste("Enter", user, "password:"))
+)
+db <- MAFdb.load(con, "~/Documenti/TCGA-BRCA-VCF-Datasets/gdc_download_20210128_084228.661394/053f01ed-3154-4aea-9e7f-932c435034b3/TCGA.BRCA.mutect.053f01ed-3154-4aea-9e7f-932c435034b3.DR-10.0.protected.maf", limit = 10, reset = T)
+print(db)
+dbDisconnect(con)
+```
+
