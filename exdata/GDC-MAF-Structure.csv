@@ -71,8 +71,8 @@ Column,Description,Content structure,Type,
 70 - TREMBL,UniProtKB/TrEMBL identifier of protein product,An ID of the involved protein,varchar,
 71 - UNIPARC,UniParc identifier of protein product,An ID of the involved protein,varchar,
 72 - RefSeq,RefSeq identifier for this transcript,An ID of the involved transcript (can be ; separated),varchar,
-73 - SIFT,"The   SIFT prediction and/or score, with both given as prediction (score)",prediction and score with format: predicition(float_score),varchar,gestito in tabella vep
-74 - PolyPhen,The   PolyPhen prediction and/or score,prediction and score with format: predicition(float_score),varchar,gestito in tabella vep
+73 - SIFT,"The   SIFT prediction and/or score, with both given as prediction (score)",prediction and score with format: predicition(float_score),varchar,managed in vep table
+74 - PolyPhen,The   PolyPhen prediction and/or score,prediction and score with format: predicition(float_score),varchar,managed in vep table
 75 - EXON,The exon number (out of total number),Exon_number/total,varchar,
 76 - INTRON,The intron number (out of total number),Intron_number/total,varchar,
 77 - DOMAINS,The source and identifier of any overlapping protein domains,"A ; separated list of name/value pairs, where the association is not univocal. For example :""Pfam_domain:PF08016;Pfam_domain:PF00520;Transmembrane_helices:Tmhmm;Prints_domain:PR01433;Superfamily_domains:SSF81324
@@ -87,7 +87,7 @@ Column,Description,Content structure,Type,
 85 - AA_MAF,Non-reference allele and frequency of existing variant in   NHLBI-ESP African American population,A frequency,float,
 86 - EA_MAF,Non-reference allele and frequency of existing variant in NHLBI-ESP European American population,A frequency,float,
 87 - CLIN_SIG,Clinical significance of variant from dbSNP,"A category (like benign, pathogenic)",varchar,
-88 - SOMATIC,"Somatic status of each ID reported under Existing_variation (0, 1, or null)","An integer, by definition",integer,
+88 - SOMATIC,"Somatic status of each ID reported under Existing_variation (0, 1, or null)",; sep list,varchar,not really a list… 
 89 - PUBMED,Pubmed ID(s) of publications that cite existing variant,A ; separated list of numerical identifiers,varchar,
 90 - MOTIF_NAME,The source and identifier of a transcription factor binding profile aligned at this position,"TF binding motif (an ID after a descritpion): Name/Accession_association_FOSL1:MA0477.1
 ",varchar,

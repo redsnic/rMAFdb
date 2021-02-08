@@ -165,6 +165,21 @@ CharacterVector maf_db_reader(CharacterVector table_name, CharacterVector text, 
   return wrap(output_query);
 }
 
+/**
+ * Add priority index
+ * 
+ * Auxiliary function to add a "Priority Index". 
+ * A priority index follows the db_index number (normally, the MAF line) 
+ * position and keeps track of the order of the element in the field 
+ * considered for the split in that row.
+ * 
+ * This is useful for example to maintain priority order of VEP annotations 
+ * in the MAF file.
+ * 
+ * @param table table on which to add this priority index
+ * 
+ * @return
+ */
 void add_priority_index(text_table* table){
   table->use_extra_index = true;
    int current_extra_index = 1;
@@ -182,21 +197,10 @@ void add_priority_index(text_table* table){
    }
 }
 
-// void separe_and_get_query(text_table& main_table, std::string& output_query, std::string colname, int rule){
-//   auto header_splitted_cols = new std::vector<std::string>();
-//   header_splitted_cols->push_back(colname);
-//   auto rules_splitted_cols = new std::vector<int>();
-//   rules_splitted_cols->push_back(rule);
-//   auto splitted_cols = main_table.separe_cols("list_cols", header_splitted_cols, rules_splitted_cols,"nani", ';');
-//   
-//   output_query.append(splitted_cols->echo());
-//   
-//   delete(header_splitted_cols);
-//   delete(rules_splitted_cols);
-//   delete(splitted_cols);
-// }
-
-
+/**
+ * Simple testing procedure used for a small table and to show functionalities
+ * (see .Rmd file)
+ */
 //[[Rcpp::export]]
 CharacterVector test_MAFdb(CharacterVector table_name, CharacterVector text, CharacterVector header, 
                               IntegerVector rules, int starting_point){

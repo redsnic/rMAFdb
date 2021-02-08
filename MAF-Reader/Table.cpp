@@ -2,6 +2,7 @@
 
 /*
  * RULES:
+ * 0: mask column (do not report in ouput query)
  * 1: quote
  * 2: do not quote
  */
@@ -16,37 +17,39 @@
  * @param header sequence of column names
  * @param rules sequence of rules (quoting etc.)
  * @param name table name
- * @param starting_point starting index for the db_index additional column
- * 
+ * @param starting_point starting index (-1) for the db_index additional column
  */
 text_table::text_table(std::vector<std::string>* header, std::vector<int>* rules, std::string name, int starting_point){
   assert(header->size() == rules->size()); 
-  this->header = header;
-  this->rules = rules;
-  this->content = new std::vector<std::vector<field*>*>();  
-  this->line = -1; /* no line exist */ 
-  this->col = 0;  
-  this->name = name;
-  this->starting_point = starting_point;
-  this->index = std::vector<int>();
-  this->extra_index = std::vector<int>();
-  this->use_extra_index = false;
+  this->header = header; // table header used to locate columns by name
+  this->rules = rules; // output rules for each column
+  this->content = new std::vector<std::vector<field*>*>(); // content of the table  
+  this->line = -1; // -1 means that no line currently exist  
+  this->col = 0; // pointer to the current column in field insertion
+  this->name = name; // name of this table for the output query
+  this->starting_point = starting_point; 
+  this->index = std::vector<int>(); // db_index
+  this->extra_index = std::vector<int>(); // extra index for other uses
+  this->use_extra_index = false; // true if output should include extra index
 }  
 
 /**
- * add a field to the table
+ * Add a field to the table
  * 
- * also manages the passage to the next row 
+ * also manages the passage to the next row, the sequential db_index and
+ * the extra_index for the user. 
  * 
  * @param next field to be added
  */
 void text_table::add(field* next){
   if(this->content->size() == 0 || this->content->at(this->line)->size() >= this->ncol()){
+    // manage new line
     this->content->push_back(new std::vector<field*>());
     this->col = 0;
     this->line++;
   }
-  if(this->col == 0){ // set up index when at the beginning of a row
+  if(this->col == 0){ 
+    // set up index when at the beginning of a row
     if(starting_point>=0){
       this->index.push_back(starting_point+this->index.size()+1);
       this->extra_index.push_back(0);
@@ -55,8 +58,9 @@ void text_table::add(field* next){
       this->extra_index.push_back(0);
     }
   }
+  // add field
   this->content->at(this->line)->push_back(next); 
-  /* apply rules (quoting in this case)*/
+  /* apply quoting rules */
   if(this->rules->at(this->col) == 1){
     this->content->at(this->line)->at(this->col)->quote(); 
   }else if(this->rules->at(this->col) == 2){
@@ -66,7 +70,9 @@ void text_table::add(field* next){
 }
 
 /**
- * distructor 
+ * Destructor
+ * 
+ * The destructor deletes all the content of "content"
  */
 text_table::~text_table(){ 
   for(int i = 0; i<this->nrow(); i++){
@@ -80,9 +86,14 @@ text_table::~text_table(){
 
 
 /**
- * Prepare inserion query
+ * Prepare insertion query
  * 
- * The query is tested for PostgeSQL
+ * --- The query was tested for PostgeSQL ---
+ * 
+ * db_index is the first column while the auxiliary index 
+ * is the second column (when used).
+ * 
+ * Quoting is managed filed per field 
  * 
  * @return insertion query for this table
  */
@@ -119,10 +130,14 @@ std::string text_table::echo(){
 } 
 
 /**
- * get field at given position 
+ * Access field
  * 
- * @param row
- * @param col
+ * Get field at given position 
+ * 
+ * @param row 
+ * @param col 
+ * 
+ * @return selected field
  * 
  */
 field* text_table::at(int row, int col){
@@ -131,7 +146,25 @@ field* text_table::at(int row, int col){
 
 
 /**
+ * split in rows 
  * 
+ * Create a new table based on a specific column 
+ * of this one. The separation occurs per field:
+ * 
+ * col1  col2                               col1 col2
+ *    1 a;b;c ---> separate rows (col2) -->    1    a
+ *                                             1    b
+ *                                             1    c
+ *
+ * Note that fields will point to the original text used by this table
+ * 
+ * The resulting table is a Nx2 table (db_index, content).
+ * 
+ * @param colname column to split
+ * @param name name of the content column
+ * @param sep separator
+ * 
+ * @return new table 
  */
 text_table* text_table::separe_rows(std::string colname, std::string name, char sep){ // int rule
   auto pos_it = std::find(this->header->begin(),
@@ -174,9 +207,22 @@ text_table* text_table::separe_rows(std::string colname, std::string name, char 
 }
 
 
-
 /**
+ * split in columns
  * 
+ * Create a new table based on a specific column of this one. The 
+ * splitting is done by field:
+ * 
+ * col1 col2        col1 col2 col3 col4
+ *    1 a;b;c  --->    1    a    b    c   
+ * 
+ * @param colname name of the column to be splitted
+ * @param new_header header of the new table 
+ * @param new_rules rules for the new columns
+ * @param name name of the new table
+ * @param sep separator to be used
+ * 
+ * @return the new table
  */
 text_table* text_table::separe_cols(std::string colname, std::vector<std::string>* new_header, std::vector<int>* new_rules, std::string name, char sep){ // int rule
   auto pos_it = std::find(this->header->begin(),
@@ -210,7 +256,22 @@ text_table* text_table::separe_cols(std::string colname, std::vector<std::string
   }
 }
 
-
+/**
+ * Split key/value column 
+ * 
+ * Creates a new table from a column where the field are interpreted as key value pairs
+ * 
+ * col1 col2       col1 key value
+ *    1  a=3 --->     1   a     3
+ *    
+ * @parma colname column name of the column to be splitted
+ * @param key_rule rule for the key
+ * @param value_rule rule for the value
+ * @param name name of the new table
+ * @param sep separator to be used
+ * 
+ * @return the new table
+ */
 text_table* text_table::kv_separe(std::string colname, int key_rule, int value_rule, std::string name, char sep){ 
   auto header_splitted_cols = new std::vector<std::string>();
   header_splitted_cols->push_back("key");
@@ -223,7 +284,23 @@ text_table* text_table::kv_separe(std::string colname, int key_rule, int value_r
 
 
 /**
+ * Merge key/value column 
  * 
+ * Creates a new table from two column where the field are interpreted as key value pairs
+ * 
+ * col1 col2 col3       col1 key value
+ *    1  a;b  3:2  --->     1  a     3
+ *                          1  b     3
+ *                          
+ * @parma colname1 first column name of the column to be merged
+ * @parma colname1 first column name of the column to be merged
+ * @param key_rule rule for the key
+ * @param value_rule rule for the value
+ * @param name name of the new table
+ * @param sep1 separator to be used for the first column
+ * @param sep2 separator to be used for the second column
+ * 
+ * @return the new table
  */ 
 text_table* text_table::kv_merge(std::string colname1, std::string colname2, int key_rule, int value_rule, std::string name, char sep1, char sep2){ 
   auto pos_it1 = std::find(this->header->begin(),
@@ -276,10 +353,25 @@ text_table* text_table::kv_merge(std::string colname1, std::string colname2, int
   }
 }
 
+/* used to virutally add content for field pointers */
 std::string TRUE_STR = "true";
 
 /**
+ * Manage VCF info field in MAF files
  * 
+ * It behaves similarly to "split in columns" plus "key value split"
+ * 
+ * It is also important to note that INFO field can also have flag keys that 
+ * are interpreted as true (key = name, vale="true"). All the produced
+ * fields are quoted and should be of varchar type.
+ * 
+ * @param colname name of the INFO column
+ * @param key_rule (should be "quote")
+ * @param value_rule (should be "quote")
+ * @param name name of the new table
+ * @param sep separator to be used 
+ * 
+ * @return the newly created table
  */
 text_table* text_table::separe_vcf_info_field(std::string colname, int key_rule, int value_rule, std::string name, char sep){ 
   
@@ -324,10 +416,18 @@ text_table* text_table::separe_vcf_info_field(std::string colname, int key_rule,
   }
 }
 
-/* --------------------- */
- 
-
-
+ /**
+  * Manage "classification(score)" fields
+  * 
+  * equal to key/value separation but removes brackets (inner function)
+  * 
+  * @param colname name of the column of interest
+  * @param new_header header of the new table
+  * @param new_rules rules of the new table
+  * @param name name of the new table
+  * 
+  * @return the newly created table
+  */
 text_table* text_table::separe_cols_brackets(std::string colname, std::vector<std::string>* new_header, std::vector<int>* new_rules, std::string name){ // int rule
   auto pos_it = std::find(this->header->begin(),
                           this->header->end(), colname);
@@ -366,7 +466,16 @@ text_table* text_table::separe_cols_brackets(std::string colname, std::vector<st
   }
 }
 
-
+/**
+ * Manage "classification(score)" fields
+ * 
+ * equal to key/value separation but removes brackets (outer function)
+ * 
+ * @param colname name of the column of interest
+ * @param name name of the new table
+ * 
+ * @return the newly created table
+ */
 text_table* text_table::brackets_separe(std::string colname, std::string name){ 
   auto header_splitted_cols = new std::vector<std::string>();
   header_splitted_cols->push_back("classification");

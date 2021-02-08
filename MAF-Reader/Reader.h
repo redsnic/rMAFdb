@@ -10,7 +10,6 @@ using namespace Rcpp;
 #include "Table.h" 
 #include "Utils.h"
 
-
 CharacterVector maf_db_reader(CharacterVector table_name, CharacterVector text, CharacterVector header, 
 IntegerVector rules, int starting_point); 
 void separe_and_get_query(text_table& main_table, std::string& output_query, std::string colname, int rule);

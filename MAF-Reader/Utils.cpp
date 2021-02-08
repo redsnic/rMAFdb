@@ -31,6 +31,18 @@ std::vector<field*>* tokenize(field* text, char sep){
 }
  
  
+/**
+ * locate (column) and test (rule equality)
+ * 
+ * Auxiliary function to check if a column has a certain rule by column name
+ * 
+ * @param column
+ * @param rule 
+ * @param columns (list of columns)
+ * @param rules (list of rules)
+ * 
+ * @return true if target column has the target rule
+ */
 bool locate_and_test(std::string column, int rule, std::vector<std::string>* columns, std::vector<int>* rules){
   auto pos_it = std::find(columns->begin(),
                           columns->end(), column);

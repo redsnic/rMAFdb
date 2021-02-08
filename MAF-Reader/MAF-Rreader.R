@@ -2,10 +2,18 @@
 
 #' Create a full db from a maf file
 #' 
-#' Now implements only the main table and the flags
+#' This procedures prepares the structures to load a MAF file into
+#' a structured database. The default structure of the databased is
+#' based on GDC standard. 
 #' 
+#' @param file_path
+#' @param table.name
+#' @param names
+#' @param types
+#' 
+#' @return a list object (see code)
 maf_db_loader <- function(file_path, table.name, names, types){
-  
+  # read in chunck
   cr <- chunk_reader(file_path)
   
   # manage header 
@@ -16,8 +24,6 @@ maf_db_loader <- function(file_path, table.name, names, types){
       break
     } 
   }
-  
-  ncols <- length(header)
   
   should.quote <- function(var){
     if(startsWith(var, "varchar")){
@@ -68,9 +74,9 @@ maf_db_loader <- function(file_path, table.name, names, types){
     
   # ---
   list(
-    header = header,
-    main.table.structure = paired.df,
-    read = function(max_chunk = 10000){
+    header = header, # MAF header
+    main.table.structure = paired.df, # dataframe of colnames, types and rules
+    read = function(max_chunk = 10000){ # function to gradually load the data
       next_chunck <- cr$read(max_chunk)
       
       nrows <- length(next_chunck)
@@ -84,7 +90,7 @@ maf_db_loader <- function(file_path, table.name, names, types){
       # call C++ function
       maf_db_reader(table.name, next_chunck, header, quote_array, starting_point)
     },
-    close = function(){ cr$close() } 
+    close = function(){ cr$close() } # colse connection
   )
 }
 

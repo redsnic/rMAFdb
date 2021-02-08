@@ -15,7 +15,6 @@ public:
   int nrow(){return this->content->size();}
   int ncol(){return this->header->size();}
   int getDBindex(int i){return this->index[i] + 1 + this->starting_point;}
-  //std::vector<std::string>* getHeader(){return this->header;}
   void add(field* next_field);
   std::string echo();
   ~text_table(); //TODO manage header and such...

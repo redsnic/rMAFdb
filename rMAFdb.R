@@ -2,16 +2,50 @@
 require(DBI)
 require(dbplyr)
 
+#' This clasd is used to create an intuitive interface to a database containing
+#' MAF file data (possibly in GDC format)
+#' 
+#' (In the current form, using MAFdb constructor, can operate on any database
+#'  to simplify access to tabls and columns)
+#'  
+#' @slot con the DBI connection to the database
+#'   
+#' @method `[` access a specific table in the database
+#' @method print print all tables and columns in this database
+#' 
+#' @export
 setClass("MAFdb",
          representation(
            con = "DBIConnection"
          ))
 
 
+#' Create a MAFdb
+#'
+#' creates a MAFdb object from a connection
+#' 
+#' @con connection
+#' 
+#' @export
 MAFdb <- function(con){
   new("MAFdb", con = con)
 }
 
+#' Create a MAFdb from file
+#' 
+#' Creates a MAFdb directly from a MAF file. This procedure
+#' loads the file into the database gradually, in chuncks, in 
+#' order to reduce RAM usage.
+#'
+#' @param con connection to the database 
+#' @param path path to the MAF file
+#' @param names list of column names (to specify type)
+#' @param types list of types associated to column names
+#' @param limit maximum number of lines to be read
+#' @param max_chunk maximum number of lines to be read in a single pass
+#' @param reset Drop the current dataset and make new tables?
+#'
+#'@export
 MAFdb.load <- function(con, path, names=NULL, types=NULL, limit=NULL, max_chunk=10000, reset=FALSE){
   table.name <- "MAF"
   
@@ -55,8 +89,9 @@ MAFdb.load <- function(con, path, names=NULL, types=NULL, limit=NULL, max_chunk=
     
     column_names <- loader$main.table.structure %>% pull(names)
     is.special <- function(col){
+      
       pos <- grep(paste("^",col,"$", sep=""), column_names)
-      if(is.null(pos)){
+      if(length(pos)==0){
         FALSE
       }else{
         loader$main.table.structure[pos[1], "rules"] == 3L
@@ -196,6 +231,8 @@ MAFdb.load <- function(con, path, names=NULL, types=NULL, limit=NULL, max_chunk=
   new("MAFdb", con = con)
 }
 
+#' Print tables and columns of this db
+#'
 setMethod("print", signature(x="MAFdb"), function(x){
   for(tab in dbListTables(x@con)){
     print(tab)
@@ -205,6 +242,8 @@ setMethod("print", signature(x="MAFdb"), function(x){
   }
 })
 
+#' Access a specific table of this database 
+#'
 setMethod("[", signature(x="MAFdb", i="ANY", j="missing"),  function(x,i,j,...){
   if(class(i) == "character" && length(i)==1){
     tbl(x@con, i)
