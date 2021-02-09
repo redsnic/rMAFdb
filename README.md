@@ -23,7 +23,7 @@ even for smaller data sets.
 
 ```{r}
 # install
-devtools::install_github("redsnic/rMAFdb", vignette=T)
+devtools::install_github("redsnic/rMAFdb", build_vignette=T)
 # display vignettes
 browseVignettes("rMAFdb")
 ```
