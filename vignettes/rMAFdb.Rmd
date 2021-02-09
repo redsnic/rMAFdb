@@ -1,10 +1,24 @@
 ---
-title: "MAF db creation"
+title: "rMAFdb"
+author: 
+    name: "Nicolò Rossi"
+    affiliation: "University of Udine"
+    email: "olocin.issor@gmail.com"
+date: "09/02/2021"
+geometry: margin=2cm
 output:
-  html_document: 
-    df_print: paged
-  pdf_document: defaul
+    BiocStyle::html_document:
+        toc_float: true
+        df_print: kable
+vignette: >
+    %\VignetteEncoding{UTF-8}
+    %\VignetteIndexEntry{rMAFdb: Create databases to manage MAF files}
+    %\VignetteEngine{knitr::rmarkdown}
 ---
+
+```{r style, echo = FALSE, results = 'asis'}
+BiocStyle::markdown()
+```
 
 ```{r,setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, message=F, warning=F)
@@ -13,12 +27,8 @@ library(tidyverse)
 library(dbplyr)
 library(DBI)
 library(tictoc)
-library(skimr)
-# other libs
-source('MAF-Reader/MAF-Rreader.R')
-source('Chunked-Read.R')
-# for(f in list.files(path = "Library", pattern="*.R")) source(paste("Library/",f,sep=""))
-Rcpp::sourceCpp('MAF-Reader/Reader.cpp')
+library(rprojroot)
+library(rMAFdb)
 ```
 
 This files shows how to use the current implementation of the MAFdb. The goal
@@ -42,7 +52,7 @@ con <- dbConnect(RPostgreSQL::PostgreSQL(),
 
 ```{r}
 tic()
-filename <- "exdata/small.maf" # just 500 lines (header included)
+filename <- find_root_file("inst", "extdata", "small.maf", criterion = has_file("DESCRIPTION"))
 db <- MAFdb.load(con, filename, reset = T)
 toc()
 print(db)

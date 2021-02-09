@@ -2,11 +2,12 @@
 
 // implemented in header file
 
-/**
- * print this field in SQL format
- * 
- * also manages NAs
- */
+
+//' print this field in SQL format
+//'
+//' also manages NAs
+//'
+//' @return SQL formatted string
 std::string field::echo(){
   if(this->length()==0){
     return "NULL";
@@ -19,11 +20,11 @@ std::string field::echo(){
     for(int i = 0; i<this->length(); i++){
       char c = this->at(i);
       out.push_back(c);
-      if(c == '\''){ // escape ' 
+      if(c == '\''){ // escape '
         out.push_back('\'');
       }
     }
     out.push_back('\'');
-    return out; 
+    return out;
   }
 }
