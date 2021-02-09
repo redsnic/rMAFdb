@@ -33,7 +33,6 @@ Imports:
 Suggests:
   knitr,
   rmarkdown,
-  BiocStyle,
   RPostgreSQL
 VignetteBuilder: knitr
 LinkingTo: Rcpp

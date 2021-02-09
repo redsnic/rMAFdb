@@ -19,4 +19,11 @@ even for smaller data sets.
   reorganized automatically. User can provide basic interpretation (numerical, character) for columns of its
   MAF files and the database will be prepared accordingly. There are no mandatory columns.
   
+### Installation
 
+```{r}
+# install
+devtools::install_github("redsnic/rMAFdb", vignette=T)
+# display vignettes
+browseVignettes("rMAFdb")
+```
