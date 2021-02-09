@@ -251,8 +251,8 @@ MAFdb.load <- function(con, path, names=NULL, types=NULL, limit=NULL, max_chunk=
 
 #' Print tables and columns of this db
 #'
-#'@param x a MAFdb object
-setMethod("print", signature(x="MAFdb"), function(x){
+#' @param object this MAFdb
+setMethod("show", "MAFdb", function(x){
   for(tab in dbListTables(x@con)){
     print(tab)
     for(field in dbListFields(x@con, tab)){
@@ -268,6 +268,7 @@ setMethod("print", signature(x="MAFdb"), function(x){
 #' @param j unused
 #' @param ... unused
 #' @param drop unused
+#'
 setMethod("[", signature(x="MAFdb", i="ANY", j="missing"),  function(x,i,j,...){
   if(class(i) == "character" && length(i)==1){
     tbl(x@con, i)
