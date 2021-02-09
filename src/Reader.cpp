@@ -243,7 +243,7 @@ CharacterVector test_MAFdb(CharacterVector table_name, CharacterVector text, Cha
     delete(line_field);
   }
 
-  // /* output */
+  /* output */
   std::string ouput_query = "";
   ouput_query.append(main_table.echo());
 
@@ -263,9 +263,9 @@ CharacterVector test_MAFdb(CharacterVector table_name, CharacterVector text, Cha
 
   ouput_query.append(splitted_cols->echo());
 
+  delete(splitted_cols);
   delete(header_splitted_cols);
   delete(rules_splitted_cols);
-  delete(splitted_cols);
 
   auto kv_test = main_table.kv_separe("kv_test", 1, 2, "kv1", '=');
   ouput_query.append(kv_test->echo());
@@ -273,7 +273,7 @@ CharacterVector test_MAFdb(CharacterVector table_name, CharacterVector text, Cha
 
   auto kv_test2 = main_table.kv_merge("keys", "values", 1, 2, "kv2", ':', ',');
   ouput_query.append(kv_test2->echo());
-  // delete(kv_test2);
+  delete(kv_test2);
 
   /* OUTPUT */
   return wrap(ouput_query);
