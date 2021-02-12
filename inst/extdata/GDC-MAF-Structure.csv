@@ -1,4 +1,4 @@
-Column,Description,Content structure,Type,
+Column,Description,Content structure,Type,Notes
 1 - Hugo_Symbol,"HUGO symbol for the gene (HUGO symbols are always in all caps). ""Unknown"" is used for regions that do not correspond to a gene",Gene name as by HUGO Gene Nomenclature committee,varchar,
 2 - Entrez_Gene_Id,"Entrez gene ID (an integer). ""0"" is used for regions that do not correspond to a gene region or Ensembl ID","Another way to define Gene IDs, its value is numerical",integer,
 3 - Center,One or more genome sequencing center reporting the variant,A name,varchar,
@@ -87,7 +87,7 @@ Column,Description,Content structure,Type,
 85 - AA_MAF,Non-reference allele and frequency of existing variant in   NHLBI-ESP African American population,A frequency,float,
 86 - EA_MAF,Non-reference allele and frequency of existing variant in NHLBI-ESP European American population,A frequency,float,
 87 - CLIN_SIG,Clinical significance of variant from dbSNP,"A category (like benign, pathogenic)",varchar,
-88 - SOMATIC,"Somatic status of each ID reported under Existing_variation (0, 1, or null)",; sep list,varchar,not really a list… 
+88 - SOMATIC,"Somatic status of each ID reported under Existing_variation (0, 1, or null)",; sep list,varchar,not really a list…
 89 - PUBMED,Pubmed ID(s) of publications that cite existing variant,A ; separated list of numerical identifiers,varchar,
 90 - MOTIF_NAME,The source and identifier of a transcription factor binding profile aligned at this position,"TF binding motif (an ID after a descritpion): Name/Accession_association_FOSL1:MA0477.1
 ",varchar,

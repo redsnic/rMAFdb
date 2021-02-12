@@ -34,7 +34,12 @@ maf_db_loader <- function(file_path, table.name, names, types){
   }
 
   # default column types and management
-  filepath <-  find_root_file("inst", "extdata", "GDC-MAF-Structure.csv", criterion = has_file("DESCRIPTION"))
+  filepath <- ""
+  try({filepath <- system.file("inst", "extdata", "GDC-MAF-Structure.csv", package = "rMAFdb")})
+  if (filepath == ""){ # manage vignette build
+    filepath <- find_root_file("inst", "extdata", "GDC-MAF-Structure.csv", criterion = has_file("DESCRIPTION"))
+  }
+
   gdc.rules.table <- read_csv(filepath)
   gdc.rules <- gdc.rules.table %>%
     pull(Type) %>%

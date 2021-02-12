@@ -26,13 +26,36 @@ setClass("MAFdb",
 #' @param maf.db original MAF database (to retrieve MAF structure and indexes)
 #'
 #' @return a data frame with the resulting MAF
+#'
+#' @export
 to.regular.MAF <- function(data.flow, maf.db){
   inner_join(
     data.flow %>% select(db_index) %>% distinct(),
     maf.db["maf"],
     by="db_index"
-  ) %>% as.data.frame()
+  ) %>% collect()
 }
+
+#' Get all information on these indexes
+#'
+#' Creates a tibble representing the information on the currently selected indexes
+#' from the selected table.
+#' This procedure loads results in RAM, use with care.
+#'
+#' @param data.flow dbplyr data flow from the original database
+#' @param maf.db a db table (with db_index column)
+#'
+#' @return a data frame with the resulting information
+#'
+#' @export
+pull.indexes.from.table <- function(data.flow, table){
+  inner_join(
+    data.flow %>% select(db_index) %>% distinct(),
+    table,
+    by="db_index"
+  ) %>% collect()
+}
+
 
 #' Create a MAFdb
 #'

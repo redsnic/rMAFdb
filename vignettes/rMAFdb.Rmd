@@ -38,7 +38,9 @@ can be easily converted to a regular MAF file.
 
 ## Connect to database:
 
-```{r}
+This example code shows how it is possible to connect to a local Postgres database:
+
+```{r, eval=T}
 user <- "postgres"
 con <- dbConnect(RPostgreSQL::PostgreSQL(), 
   host = "127.0.0.1",
@@ -48,7 +50,15 @@ con <- dbConnect(RPostgreSQL::PostgreSQL(),
 )
 ```
 
-## load database
+For these examples we will use a database allocated on RAM:
+
+```{r}
+con <- DBI::dbConnect(RSQLite::SQLite(), ":memory:")
+```
+
+Connections are managed by DBI, so there is full flexibility on which database manager to use.
+
+## Load database
 
 ```{r}
 tic()
@@ -88,7 +98,13 @@ cat(test_MAFdb("example", example.text, c("c1","list","c3","c4", "list_cols", "k
 ## Test operations on MAF
 
 ```{r}
-db["maf"] %>% group_by(hugo_symbol) %>% summarise(n=n()) %>% arrange(desc(n)) %>% as.data.frame()
+db["maf"] %>% group_by(hugo_symbol) %>% summarise(n=n()) %>% arrange(desc(n)) %>% collect()
+```
+
+Finally, to close database connection:
+
+```{r}
+dbDisconnect(con)
 ```
 
 

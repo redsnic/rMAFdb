@@ -33,7 +33,8 @@ Imports:
 Suggests:
   knitr,
   rmarkdown,
-  RPostgreSQL
+  RPostgreSQL,
+  RSQLite
 VignetteBuilder: knitr
 LinkingTo: Rcpp
   
