@@ -43,4 +43,7 @@ Meta
 # .o
 src/*.o
 
+# .so
+src/*.so
+
 
