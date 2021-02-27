@@ -4,7 +4,7 @@ author:
     name: "Nicolò Rossi"
     affiliation: "University of Udine"
     email: "olocin.issor@gmail.com"
-date: "09/02/2021"
+date: "27/02/2021"
 geometry: margin=2cm
 output:
     html_document:
@@ -15,10 +15,6 @@ vignette: >
     %\VignetteIndexEntry{rMAFdb: Create databases to manage MAF files}
     %\VignetteEngine{knitr::rmarkdown}
 ---
-
-```{r style, echo = FALSE, results = 'asis'}
-BiocStyle::markdown()
-```
 
 ```{r,setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, message=F, warning=F)
@@ -40,7 +36,7 @@ can be easily converted to a regular MAF file.
 
 This example code shows how it is possible to connect to a local Postgres database:
 
-```{r, eval=T}
+```{r, eval=F}
 user <- "postgres"
 con <- dbConnect(RPostgreSQL::PostgreSQL(), 
   host = "127.0.0.1",
