@@ -20,6 +20,6 @@ a list object (see code)
 }
 \description{
 This procedures prepares the structures to load a MAF file into
-a structured database. The default structure of the databased is
-based on GDC standard.
+a structured database. The default structure of the database is
+based on the GDC standard.
 }

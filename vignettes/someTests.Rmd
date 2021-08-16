@@ -1,0 +1,52 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r,setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=F, warning=F)
+# --- libs
+library(tidyverse)
+library(dbplyr)
+library(DBI)
+library(tictoc)
+library(rprojroot)
+library(rMAFdb)
+```
+```{r, eval=F}
+user <- "postgres"
+con <- dbConnect(RPostgreSQL::PostgreSQL(), 
+  host = "127.0.0.1",
+  user = user,
+  dbname = "HCMAF",
+  password = "1234"
+)
+```
+```{r}
+con <- DBI::dbConnect(RSQLite::SQLite(), ":memory:")
+```
+```{r}
+tic()
+#filename <- find_root_file("inst", "extdata", "small.maf", criterion = has_file("DESCRIPTION"))
+filename <- "~/garr/maf1.maf"
+db <- MAFdb.load(con, filename, reset = T,
+                 names = c("vcf_info", "consequence", "domains", "dbsnp_val_status", "all_effects", "filter"),
+                 types = c("varchar", "varchar", "varchar", "varchar", "varchar", "varchar"))
+toc()
+print(db)
+```
+
+```{r}
+db["MAF"] %>% filter(t_depth>=30) %>% collect() %>% select(t_depth, t_ref_count, t_alt_count, consequence, af, clin_sig)
+```
+
+
+```{r}
+filename <- "~/garr/maf1.maf"
+maf <- read_tsv(filename, comment = "#")
+maf
+```
+
+
+
+

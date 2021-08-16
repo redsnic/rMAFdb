@@ -1,8 +1,8 @@
 #' Create a full db from a maf file
 #'
 #' This procedures prepares the structures to load a MAF file into
-#' a structured database. The default structure of the databased is
-#' based on GDC standard.
+#' a structured database. The default structure of the database is
+#' based on the GDC standard.
 #'
 #' @param file_path path to MAF file
 #' @param table.name name of the main db table
@@ -35,32 +35,25 @@ maf_db_loader <- function(file_path, table.name, names, types){
 
   # default column types and management
   filepath <- ""
-  try({filepath <- system.file("inst", "extdata", "GDC-MAF-Structure.csv", package = "rMAFdb")})
+  try({filepath <- system.file("extdata", "GDC-MAF-Structure.csv", package = "rMAFdb")})
   if (filepath == ""){ # manage vignette build
-    filepath <- find_root_file("inst", "extdata", "GDC-MAF-Structure.csv", criterion = has_file("DESCRIPTION"))
+    filepath <- find_root_file("extdata", "GDC-MAF-Structure.csv", criterion = has_file("DESCRIPTION"))
   }
 
   gdc.rules.table <- read_csv(filepath)
+
   gdc.rules <- gdc.rules.table %>%
     pull(Type) %>%
     map_int(~ ifelse(. == "varchar", 1L, ifelse(. == "float" || . == "integer", 2L, 3L)))
+
   gdc.names <- gdc.rules.table %>% pull(Column) %>% map_chr(~gsub("^[^-]*- ", "", .)) %>% tolower()
+
   gdc.rules.table <- tibble(names=gdc.names,
                             types=gdc.rules.table %>% pull(Type),
                             rules=gdc.rules)
 
   # manage column selection
   sel.df <- gdc.rules.table # defaults
-  rownames(sel.df) <- sel.df %>% pull(names)
-  if(!is.null(names) && !is.null(types)) {
-    new.management <- tibble(names = names, types=types, rules = map_int(types, ~should.quote(.)))
-    override.df <- inner_join(sel.df %>% select(names),
-                                   new.management, by="names")
-    for(i in 1:row(override.df)){
-      sel.df[override.df[i,"names"],"rules"] <- override.df[i,"rules"]
-      sel.df[override.df[i,"names"],"types"] <- override.df[i,"types"]
-    }
-  }
 
   head.df <- tibble(names = header)
 
@@ -69,6 +62,21 @@ maf_db_loader <- function(file_path, table.name, names, types){
     sel.df,
     by=c("names")
   ) %>% mutate(rules = ifelse(is.na(rules), 1L, rules))
+
+  if(!is.null(names) && !is.null(types)){
+    override.df <- tibble(names=names, rules=map_int(types, ~should.quote(.)), types=types)
+
+    paired.df <- paired.df %>%
+      left_join(
+        override.df,
+        by=c("names")
+      ) %>% mutate(rules = ifelse(is.na(rules.y), rules.x, rules.y)) %>%
+      mutate(types = ifelse(is.na(types.y), types.x, types.y)) %>%
+      select(names, rules, types) %>%
+      mutate(types=ifelse(is.na(types),"varchar",types))
+  }
+
+  print(paired.df)
 
   # 2 NO QUOTE
   # 1 QUOTE

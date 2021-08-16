@@ -41,7 +41,7 @@ user <- "postgres"
 con <- dbConnect(RPostgreSQL::PostgreSQL(), 
   host = "127.0.0.1",
   user = user,
-  dbname = "anotherMAFtest",
+  dbname = "HCMAF",
   password = "1234"
 )
 ```

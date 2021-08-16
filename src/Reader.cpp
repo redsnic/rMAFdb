@@ -30,6 +30,9 @@ CharacterVector maf_db_reader(CharacterVector table_name, CharacterVector text, 
   std::vector<std::string> _text = as<std::vector<std::string>>(text);
   std::string _table_name = as<std::string>(table_name);
 
+  //Rcout << header << "\n";
+  //Rcout << rules << "\n";
+
   /* main table */
   text_table main_table = text_table(&_header, &_rules, _table_name, starting_point);
 

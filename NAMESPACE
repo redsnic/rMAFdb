@@ -3,6 +3,7 @@
 S3method(pull,indexes.from.table)
 export(MAFdb)
 export(MAFdb.load)
+export(load_structure)
 export(maf_db_reader)
 export(test_MAFdb)
 export(to.regular.MAF)
