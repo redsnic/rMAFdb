@@ -19,6 +19,7 @@
 #' @importFrom DBI dbListTables dbSendQuery dbListTables dbListFields
 #' @importFrom dbplyr sql
 #' @importFrom rprojroot find_root_file has_file
+#' @import rly
 #'
 #'
 NULL
